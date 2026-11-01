@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visitor Analytics</title>
+<style>
+body {
+  background: #101014;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+main {
+  background: #1b1b23;
+  padding: 30px;
+  border-radius: 16px;
+  width: min(85%, 380px);
+  text-align: center;
+}
+button {
+  background: #5865F2;
+  color: white;
+  border: 0;
+  padding: 13px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+p { color: #aaa; line-height: 1.6; }
+</style>
+</head>
+<body>
+<main>
+  <h2>Welcome</h2>
+  <p>
+    We use visitor analytics to understand website
+    traffic. With your permission, device and connection
+    information, including your IP address, will be
+    processed and sent to our analytics system.
+  </p>
+  <button id="consent">Accept Analytics</button>
+  <p id="status"></p>
+</main>
+
+<script>
+const WORKER_URL = "YOUR_CLOUDFLARE_WORKER_URL";
+
+document.getElementById("consent").onclick = async () => {
+  const status = document.getElementById("status");
+  status.textContent = "Submitting...";
+
+  const data = {
+    screen: `${screen.width}x${screen.height}`,
+    language: navigator.language,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    platform: navigator.userAgentData?.platform || navigator.platform,
+    userAgent: navigator.userAgent,
+    page: location.href,
+    referrer: document.referrer || "Direct",
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) throw new Error("Request failed");
+
+    status.textContent = "Analytics consent recorded.";
+    document.getElementById("consent").disabled = true;
+  } catch (error) {
+    status.textContent = "Unable to submit analytics.";
+  }
+};
+</script>
+</body>
+</html>
